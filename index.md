@@ -1,37 +1,1123 @@
-## Welcome to GitHub Pages
-
-You can use the [editor on GitHub](https://github.com/arpanpalsingh3/CSE455FinalProject/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
-
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/arpanpalsingh3/CSE455FinalProject/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "CSE455Final.ipynb",
+      "provenance": [],
+      "collapsed_sections": [
+        "98OVbm67i666",
+        "pwk5xb1Mowih"
+      ]
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "TPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#Project Description \n",
+        "All aspects of this project are run locally on my own personal machine through a local runtime connection with Google Colab and Juypter-notebook. The code presented here is not usable by everyone because the paths and imports may be different depending on disk setup and machine. \\\n",
+        "\n",
+        "Author: Arpanpal Singh \\\n",
+        "Kaggle User: Arpanpal Singh \\\n",
+        "UW NetId: Arpans@uw.edu\n",
+        "\n",
+        "## Project Goals \n",
+        "This project is in line with CSE 455 spring 2022 kaggle competition. The premise is to use advanced computer vision and machine learning on the provided kaggle birds dataset to accurately classify bird specifies. The training set consists of 10,000 pictures with varying dimensions. The test set consists of 1,000 pictures with varying dimensions. There are a total of 555 different possible specifies for each picture. \n",
+        "\n",
+        "## Underlying PC Specifications\n",
+        "AMD Ryzen 7 5800X 8-Core Processor 3.80 GHz \\\n",
+        "EVGA FTW3 NVIDIA Geforce RTX 3080 w/ 8704 CUDA Cores \\\n",
+        "Corsair Vengeance DDR4 32gb RAM\n",
+        "\n",
+        "\n",
+        "## Code summary\n",
+        "\n",
+        "Large portions of the code are from the tutorial code, as they worked perfectly fine for me as they were. Specifcally, the train and predict functions are nearly identical. The vast majority of the workload was researching, training, and testing the many different models I used. I use pytorch and torchvision for almost everything important in the project. All models are from the torchvision library.\n",
+        "\n",
+        "All the code for setting up the environment locally is written by me. I did not use code from any pre-existing githubs. Only from tutorials provided by the professor, and my own implementations when necessary."
+      ],
+      "metadata": {
+        "id": "ebNNLJeeX9ZE"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#1) Intialization \n",
+        "\n",
+        "The following are all the intialization steps necessary to run the project locally. They are heavily influenced and pieced together from the tutorial, however modified so as to work on my personal setup. The paths and things alike would/can be very different depending on whose running the project."
+      ],
+      "metadata": {
+        "id": "udFgHYDezA9b"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 1.1) Directory Creation \n",
+        "\n",
+        "Since we are working locally, it is important to create or navigate to the correct directories before we start running Python code. \\\n",
+        "\n",
+        "First we import the OS module of Python, which allows us to work with the underlying OS system. We create the birds22sp directory, if it doesn't exist already, and download the datasets necessary for the training and testing. We also create the checkpoints directory which is necessary for remembering training for our different networks. \\\n",
+        "\n",
+        "Working locally means that I do not have to download the dataset multiple times. Once it's on my machine, I can train and run on it whenever I want. The checkpoints directory, which in the original code was in my Google drive, is now a part of the birds22sp directory and the path slightly modified."
+      ],
+      "metadata": {
+        "id": "98OVbm67i666"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "os.environ[\"CUDA_LAUNCH_BLOCKING\"] = \"1\"\n",
+        "\n",
+        "# Verify current working directory, and move to Desktop \n",
+        "print(\"The current working directory is: \" + os.getcwd())\n",
+        "os.chdir(\"/Users/Arpan/Desktop\") #Move to Desktop, which is where the project files will be stored\n",
+        "print(\"Moved working directory to: \" + os.getcwd())\n",
+        "\n",
+        "# Verify that birds21wi folder exists\n",
+        "if not os.path.exists(\"birds21wi\"):\n",
+        "    !mkdir birds21wi\n",
+        "    os.chdir(\"birds21wi\")\n",
+        "    !python3 -m wget https://pjreddie.com/media/files/birds/train.tar\n",
+        "    !python3 -m wget https://pjreddie.com/media/files/birds/test.tar\n",
+        "    !python3 -m wget https://pjreddie.com/media/files/birds/names.txt\n",
+        "    !tar xf train.tar\n",
+        "    !tar xf test.tar\n",
+        "    !mkdir testing\n",
+        "    !move test testing\n",
+        "    print(\"birds21wi has been installed to:\" + os.getcwd())\n",
+        "    print(\"Moved working directory to: \" + os.getcwd())\n",
+        "else:\n",
+        "  os.chdir(\"birds21wi\")\n",
+        "  print(\"birds21wi was already installed at: \" + os.getcwd())\n",
+        "  print(\"Moved working directory to: \" + os.getcwd())\n",
+        "\n",
+        "# Create the checkpoints folder \n",
+        "checkpoints = '/Users/Arpan/Desktop/birds21wi/content/checkpoints/'\n",
+        "if not os.path.exists(checkpoints):\n",
+        "    os.makedirs(checkpoints)\n",
+        "    print(\"Made checkpoints directory\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "buWhji8Hik8-",
+        "outputId": "94769b48-491f-4dc0-dac7-a72d9d2f6445"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "The current working directory is: C:\\Users\\Arpan\\Desktop\\birds21wi\n",
+            "Moved working directory to: C:\\Users\\Arpan\\Desktop\n",
+            "birds21wi was already installed at: C:\\Users\\Arpan\\Desktop\\birds21wi\n",
+            "Moved working directory to: C:\\Users\\Arpan\\Desktop\\birds21wi\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 1.2 Imports & GPU intialization \n",
+        "\n",
+        "Now we can start running Python to start building our project. The project HEAVILY uses Pythons torch libraries, so it is important that we import all of them. I also have a powerful GPU in my personal machine, so it's optimal to set the torch device to  use the GPU and cuda cores inside it. \\\n",
+        "\n",
+        "NOTE: I had to spent 1-2 hours setting up CUDA for my GPU as the process for confusing to me, as well as install Pytorch locally."
+      ],
+      "metadata": {
+        "id": "pwk5xb1Mowih"
+      }
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "AvElVWmEa3IP",
+        "outputId": "29b30227-53d4-4d9f-b25d-0ad3a3ad92aa"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "cuda:0\n"
+          ]
+        }
+      ],
+      "source": [
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "\n",
+        "import torch\n",
+        "import torchvision\n",
+        "import torchvision.transforms as transforms\n",
+        "import torch.nn as nn\n",
+        "import torch.nn.functional as F\n",
+        "import torch.optim as optim\n",
+        "\n",
+        "device = torch.device(\"cuda:0\" if torch.cuda.is_available() else \"cpu\")\n",
+        "# Output the device (Should be Cuda:0 if cuda is installed)\n",
+        "print(device)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 2) Data Initialization \n",
+        "\n",
+        "The data is initialized into tensors so that we can train with it. \\\n",
+        "\n",
+        "This is one of the most important aspects of the code, as how we choose to agument and intialize the testing and training sets HEAVILY influence the end accuracy of the model, as well as the amount of memory/GPU usage the code needs. \\\n",
+        "\n",
+        "In the training set, the images are resized to one of a few different pixel dimensions, then randomly cropped, and flipped horizontally. \\\n",
+        "\n",
+        "In the testing set, the images are simply resized to the same pixel dimension, but kept otherwise the same. \\\n",
+        "\n",
+        "The different dimensions I tested with:\n",
+        "`(128x128), (256x256), (288x288), (384x384)`\n",
+        "\n",
+        "Another very aspect of the code is the batch size in the training set. The batch size essentially determins how many pictures the code is able to train on at 1 time. The higher the batch size, the most memory it takes, but the faster the network runs. I useed the following batch sizes depending on the memory load: `32, 64, 128`."
+      ],
+      "metadata": {
+        "id": "9OkoqXD0D87w"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def get_bird_data(augmentation=0):\n",
+        "    transform_train = transforms.Compose([\n",
+        "        transforms.Resize(384),\n",
+        "        transforms.RandomCrop(384, padding=8, padding_mode='edge'), # Take crops from padded images\n",
+        "        transforms.RandomHorizontalFlip(),    # 50% of time flip image along y-axis\n",
+        "        transforms.ToTensor(),\n",
+        "    ])\n",
+        "    \n",
+        "    transform_test = transforms.Compose([\n",
+        "        transforms.Resize(384),\n",
+        "        transforms.ToTensor(),\n",
+        "    ])\n",
+        "    trainset = torchvision.datasets.ImageFolder(root='train', transform=transform_train)\n",
+        "    trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=2)\n",
+        "\n",
+        "    testset = torchvision.datasets.ImageFolder(root='testing', transform=transform_test)\n",
+        "    testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False, num_workers=2)\n",
+        "    classes = open(\"names.txt\").read().strip().split(\"\\n\")\n",
+        "    class_to_idx = trainset.class_to_idx\n",
+        "    idx_to_class = {int(v): int(k) for k, v in class_to_idx.items()}\n",
+        "    idx_to_name = {k: classes[v] for k,v in idx_to_class.items()}\n",
+        "    return {'train': trainloader, 'test': testloader, 'to_class': idx_to_class, 'to_name':idx_to_name}\n",
+        "\n",
+        "data = get_bird_data()"
+      ],
+      "metadata": {
+        "id": "xz8MPns32VrC"
+      },
+      "execution_count": 5,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 3) Training Defintion  \n",
+        "\n",
+        "The following code is used to train. The `train` function takes as input the `net` to train and the `dataloader` for the training data. It also takes some optional parameters to control training.\n",
+        "\n",
+        "For this network I'll be using PyTorch's built in `nn.CrossEntropyLoss`. This will apply a softmax to our network's output, calculate the log-probability assigned to each class, then try to minimize the negative log likelihood of our data (AKA maximize the likelihood). This loss function is optimal for multi-class classifications like the birds data.\n",
+        "\n",
+        "For the optimizer I am using stochastic gradient descent with learning rate, momentum, and decay parameters.\n",
+        "\n",
+        "Note: Code is relatively unchanged from tutorial, as it accomplished everything I needed. Minor change to the cehckpoint paths and output names."
+      ],
+      "metadata": {
+        "id": "0m6EKg9as_JB"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def train(net, dataloader, epochs=1, start_epoch=0, lr=0.01, momentum=0.9, decay=0.0005, \n",
+        "          verbose=1, print_every=10, state=None, schedule={}, checkpoint_path=None):\n",
+        "  net.to(device)\n",
+        "  net.train()\n",
+        "  losses = []\n",
+        "  criterion = nn.CrossEntropyLoss()\n",
+        "  optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum, weight_decay=decay)\n",
+        "\n",
+        "  # Load previous training state\n",
+        "  if state:\n",
+        "      net.load_state_dict(state['net'])\n",
+        "      optimizer.load_state_dict(state['optimizer'])\n",
+        "      start_epoch = state['epoch']\n",
+        "      losses = state['losses']\n",
+        "\n",
+        "  # Fast forward lr schedule through already trained epochs\n",
+        "  for epoch in range(start_epoch):\n",
+        "    if epoch in schedule:\n",
+        "      print (\"Learning rate: %f\"% schedule[epoch])\n",
+        "      for g in optimizer.param_groups:\n",
+        "        g['lr'] = schedule[epoch]\n",
+        "\n",
+        "  for epoch in range(start_epoch, epochs):\n",
+        "    sum_loss = 0.0\n",
+        "\n",
+        "    # Update learning rate when scheduled\n",
+        "    if epoch in schedule:\n",
+        "      print (\"Learning rate: %f\"% schedule[epoch])\n",
+        "      for g in optimizer.param_groups:\n",
+        "        g['lr'] = schedule[epoch]\n",
+        "\n",
+        "    for i, batch in enumerate(dataloader, 0):\n",
+        "        inputs, labels = batch[0].to(device), batch[1].to(device)\n",
+        "\n",
+        "        optimizer.zero_grad()\n",
+        "\n",
+        "        outputs = net(inputs)\n",
+        "        loss = criterion(outputs, labels)\n",
+        "        loss.backward()  # autograd magic, computes all the partial derivatives\n",
+        "        optimizer.step() # takes a step in gradient direction\n",
+        "\n",
+        "        losses.append(loss.item())\n",
+        "        sum_loss += loss.item()\n",
+        "        \n",
+        "        if i % print_every == print_every-1:    # print every 10 mini-batches\n",
+        "            if verbose:\n",
+        "              print('[%d, %5d] loss: %.3f' % (epoch, i + 1, sum_loss / print_every))\n",
+        "            sum_loss = 0.0\n",
+        "    if checkpoint_path:\n",
+        "      state = {'epoch': epoch+1, 'net': net.state_dict(), 'optimizer': optimizer.state_dict(), 'losses': losses}\n",
+        "      torch.save(state, checkpoint_path + 'resNet50Size384/checkpoint-%d.pkl'%(epoch+1))\n",
+        "  return losses\n",
+        "\n",
+        "def smooth(x, size):\n",
+        "  return np.convolve(x, np.ones(size)/size, mode='valid')"
+      ],
+      "metadata": {
+        "id": "wQphlPk917Q6"
+      },
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 4) Neural Networks Definitions\n",
+        "\n",
+        "The real core of the project was to utilize different classification models and ascertain which ones were the most opitmal and give the best results. Every single model is from the Pytorch library, which contains a fairly large set of pretrained models. A major goal of the project was to hit a relatively high accuracy, which meant that I had to find the best models, but they all also had to be able to RUN on my machine.\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "f9QYeTymKnPG"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 4.1) ResNet18\n",
+        "This is the first model I attempted as it was used in the tutorial code. ResNet18 is a 72 layer architecture with 18 deep layers.  "
+      ],
+      "metadata": {
+        "id": "iKoWzbGusfu0"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resnet18 = torch.hub.load('pytorch/vision:v0.6.0', 'resnet18', pretrained=True)\n",
+        "resnet18.fc = nn.Linear(512, 555) # This will reinitialize the layer as well"
+      ],
+      "metadata": {
+        "id": "Gj8PNj_R2NOW",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "1d9b87ea-dede-4b04-bba4-90b0ab896408"
+      },
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Using cache found in C:\\Users\\Arpan/.cache\\torch\\hub\\pytorch_vision_v0.6.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "The model performed competitively from the get go, and was not extremely memory intensive. \n",
+        "\n",
+        "The first iteration was ran on `128x128` inputs with a batch size of 128. It was ran for 10 epochs at a constant learning rate of 0.01. The resulting accuracy when submitted on kaggle was: **64.850%**\n",
+        "\n",
+        "The second iteration was ran on the same inputs and batch size, but for 10 epochs, with a schedule of = {0: 0.01, 10: 0.005}. The resulting accuracy was: **66.350%**\n",
+        "\n",
+        "The next iteration was ran on `256x256` inputs with batch size of 128. It ran for 20 epochs, with the following schedule = {0: 0.01, 10: 0.005, 15: 0.001}. The resulting accuracy was: **78.150%**\n",
+        "\n",
+        "This was a massive jump in accuracy, and was one of the most important discoveries I made during my testing. I went and looked at the data set and checked the dimensions of the pictures present and realized that the dimensions were far larger than the inital `128x128` crops I was making following the tutorial. Every single picture I saw was at least 400x400 in dimension, with most of them being significantly larger. Resizing to such a low picture dimension meant that I was loosing TONS of pixel information, resulting in the network performing much lower. Hence from this point forward, I strictly only used inputs equal to or larger than `256x256`, and made sure all of them were multiples of 32.\n",
+        "\n",
+        "The last iteration of this network was ran on `384x384` inputs with batch size of 128. ResNet is designed to take images that are multiples of 32. The network ran for 30 epochs, with a schedule of = {0:.01, 5:.005, 10:.001, 20:.0005}. The resuling accuracy was the best so far at: **80.150%**"
+      ],
+      "metadata": {
+        "id": "KTQxzlXxb_lT"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "restNet18_state = torch.load(checkpoints + 'resNet18Size384/checkpoint-15.pkl')\n",
+        "plt.plot(smooth(restNet18_state['losses'], 50))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 282
+        },
+        "id": "e_MFalWTiENL",
+        "outputId": "233baba7-7e67-4aa1-dcbf-1be075ee6c18"
+      },
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[<matplotlib.lines.Line2D at 0x21c3e40ff40>]"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 8
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ],
+            "image/png": "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\n"
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "By the end of the 30th epoch, we have hit a loss rate of around 0.28. \\\n",
+        "*Note that this only shows the loss from the 15th to the 30th epoch. I lost the data due to overwrite of the first 15 epochs.*"
+      ],
+      "metadata": {
+        "id": "EAMZxmn2inGK"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 4.2) ResNet152\n",
+        "\n",
+        "The second model I attempted, which quickly taught me the reason why GPUs and hardware are so important in computer vision and machine learning. Shoutout $10k GPUs, which always baffled me with their prices. As the name suggests, this model has 152 deep layers."
+      ],
+      "metadata": {
+        "id": "1XsXPn0AHP4Y"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resnet152 = torch.hub.load('pytorch/vision:v0.6.0', 'resnet152', pretrained=True)\n",
+        "resnet152.fc = nn.Linear(2048, 555) # This will reinitialize the layer as well"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "dV7LGls7DMkV",
+        "outputId": "a4ab6bb4-5208-4e63-8ddb-35769319d9ef"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Using cache found in C:\\Users\\Arpan/.cache\\torch\\hub\\pytorch_vision_v0.6.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "This model is without a doubt the most powerful model I attempted to run during my testing. It has one of the lowest top 1% and 5% error rates of any of the models present in torch vision, which immediately attracted me to it. However, I quickly disovered that it's not feasble for me to use with my setup.\n",
+        "\n",
+        "The first iteration of the model used `128x128` inputs with 128 batch size and ran for 10 epochs with a constant learning rate of 0.01. The resulting accuracy was WORSE than resNet18 at: **63.100%** which initially really confused me. It made no sense why a resNet152, which is objectively a better version of resNet18 would perform worse. However, its important to understand that for models like this which go extremely deep in the layers, the input image needs to be much larger. With 152 deep layers, an input image of `128x128` just won't cut it. \n",
+        "\n",
+        "So I attempted to raise the input to `256x256` and `384x384`. Unfortunately, both are not possible, as the amount of memory with those inputs, and the 128 batch size are far too much for the 10gb VRAM in my card. Hence I tried to lower the batch size. The only combination I tested which actually ran without crashing due to CUDA out of memory errors was `256x256` with a batch size of 16. Unfortuntely, with such a small batch size, the run time of the code on my set up would be nearly 30 hours before it finished. It was at this point that I dropped resNet152 as a possible network for this project. \n",
+        "\n",
+        "NOTE: I am confident that had I access to a larger machine with more resources, this network would without a doubt result in the highest accuracy."
+      ],
+      "metadata": {
+        "id": "xRKc2jrRfII9"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "restNet152_state = torch.load(checkpoints + 'resNet152/checkpoint-10.pkl')\n",
+        "plt.plot(smooth(restNet152_state['losses'], 50))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 282
+        },
+        "id": "tlR-VReci_uq",
+        "outputId": "7723df7e-58dc-48fe-8e30-20c971fe2926"
+      },
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[<matplotlib.lines.Line2D at 0x21c3e909930>]"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 9
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ],
+            "image/png": "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\n"
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "By the end of the 10th epoch, we have hit a loss of rougly 0.9."
+      ],
+      "metadata": {
+        "id": "m5su-prljLEd"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 4.3) DenseNet\n",
+        "\n",
+        "The third network I attempted to use was densenet161, which is nearly as powerful and competitive with resNet152. However, just like resNet152, I very quickly learned that it was not possible for me to run this network on my set up. If I wanted to run it, the input image size would be too small to get a good accuracy. I never got a full iteration finished with this network because I already understood the end result would be similar to resNet152"
+      ],
+      "metadata": {
+        "id": "66_m-KozIj3o"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "densenet161 = torch.hub.load('pytorch/vision:v0.6.0', 'densenet161', pretrained=True)\n",
+        "densenet161.fc = nn.Linear(2048, 555) # This will reinitialize the layer as well"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "vlCsHQ7eIs-V",
+        "outputId": "5d1a046f-c974-473b-ddad-575685dbcde5"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Using cache found in C:\\Users\\Arpan/.cache\\torch\\hub\\pytorch_vision_v0.6.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 4.4) ResNet50\n",
+        "The fourth network I attempted to use, and by FAR the best of all worlds for my machine. ResNet50 is a power 50 deep layer network, which is not only relatively affordable in terms of memory usable, but very powerful in classifcation."
+      ],
+      "metadata": {
+        "id": "O8sEoZmNRbu0"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resnet50 = torch.hub.load('pytorch/vision:v0.6.0', 'resnet50', pretrained=True)\n",
+        "resnet50.fc = nn.Linear(2048, 555) # This will reinitialize the layer as well"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "lC-Pwv_vRh6A",
+        "outputId": "c8a103d6-8580-4564-b25b-2c504e0e0713"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Using cache found in C:\\Users\\Arpan/.cache\\torch\\hub\\pytorch_vision_v0.6.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "The first iteration of this network was ran on `288x288` input size images, with a batch of 64. This setup maximized my 10gb VRAM without going over the limit. It ran for 30 epochs, with a schedule of = {0:.01, 5:.005, 10:.001, 20:.0005}. The final accuracy for this iteration was: **85.600%**.\n",
+        "\n",
+        "The second iteration of this network was ran on `384x384` input size images, with a batch of 32. This setup once again maximize my memory, but also allowed the network to have bigger images to work with when layering. It also ran for 30 epochs, with a schedule of = {0:.01, 5:.005, 10:.001, 20:.0005}. The final accuracy for t his iteration was: **87.100**.\n",
+        "\n",
+        "After this, I attempted to use bigger resNet model (resNet101) but again ran into memory and time constraints. Hence, instead, I took this same model, and for an extra 20 more epochs, finalizing at 50 epochs for the second iteration. The schedule was = {0:.01, 5:.005, 10:.001, 20:.0005, 35: .0001}. The final accuracy barely went up at all, with it end at: **87.150%**. \n",
+        "\n",
+        "This was the highest accuracy I could acquire, and it placed me at 1st place on the kaggle leaderboard at the time of this writing, with a 5% lead on second place."
+      ],
+      "metadata": {
+        "id": "GIDBocr_h8N5"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resNet50_state = torch.load(checkpoints + 'resNet50Size384/checkpoint-50.pkl')\n",
+        "plt.plot(smooth(resNet50_state['losses'], 50))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 282
+        },
+        "id": "OHNnlYYIk_Zd",
+        "outputId": "95ca3a93-4551-48a3-b1ec-e09991c4783f"
+      },
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[<matplotlib.lines.Line2D at 0x21c3e7fe2c0>]"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 10
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ],
+            "image/png": "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\n"
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "The final loss rate hovered around 0.5-0.6 by the end of the model."
+      ],
+      "metadata": {
+        "id": "Yv8n9yrllHjQ"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 4.5 ResNet101\n",
+        "\n",
+        "As mentioned above, resNet101 was another model I tried as a means of upping the accuracy from resNet50, since this model has double the deep layers. However, like resNet152 and denseNet161, this model requires far too many resources and time for me to be able to feaseably run."
+      ],
+      "metadata": {
+        "id": "ONG2Hv1ClpuU"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resnet101 = torch.hub.load('pytorch/vision:v0.6.0', 'resnet101', pretrained=True)\n",
+        "resnet101.fc = nn.Linear(2048, 555) # This will reinitialize the layer as well"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "7b0Obcuxlsaf",
+        "outputId": "46a86282-b944-4539-9d8e-2d3c16910fab"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Using cache found in C:\\Users\\Arpan/.cache\\torch\\hub\\pytorch_vision_v0.6.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 4.6) VGG 19\n",
+        "The final model I attempted was the VGG 19 network. This is yet another powerful network with a top 1% error of 27.62 and top 5% error of 9.125%. It's essentially a middle ground between resNet18 and resNet50 in terms of error percentage, however the memory usage is too high for the improvement in quality. It's just better to use resNet50."
+      ],
+      "metadata": {
+        "id": "SFTj5o5J6bjC"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "vgg19 = torch.hub.load('pytorch/vision:v0.6.0', 'vgg19', pretrained=True)\n",
+        "vgg19.fc = nn.Linear(512, 555) # This will reinitialize the layer as well"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "J44TG8nX6eih",
+        "outputId": "440754c8-81fc-4a8a-88f8-babbd084c97a"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Using cache found in C:\\Users\\Arpan/.cache\\torch\\hub\\pytorch_vision_v0.6.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "The first and only iteration of this model that I ran was on `256x256` size input images, with batch of 32. This is probably the main reason why the final accuracy fell short of resNet18 as I was forced to use lower resolution images to fit the model in the GPU. The network ran for 30 epochs, with a schedule of = {0:.01, 5:.005, 10:.001, 20:.0005}. The final accuracy was: **73.900%**, which well within my expectations."
+      ],
+      "metadata": {
+        "id": "nn0LXH2Zl900"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "vgg19_state = torch.load(checkpoints + 'vgg19Size256/checkpoint-30.pkl')\n",
+        "plt.plot(smooth(vgg19_state['losses'], 50))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 282
+        },
+        "id": "sFRCC0I-maI5",
+        "outputId": "5c8dfaf1-99e9-419f-9871-9de4ae281cba"
+      },
+      "execution_count": 11,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[<matplotlib.lines.Line2D at 0x21c3e9b7070>]"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 11
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 432x288 with 1 Axes>"
+            ],
+            "image/png": "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\n"
+          },
+          "metadata": {
+            "needs_background": "light"
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Final loss rate hovered around 0.6"
+      ],
+      "metadata": {
+        "id": "-gzQE_GVmkOR"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 4.7) Running Training \n",
+        "\n",
+        "The following were the training commands used to run the train code on each of the models."
+      ],
+      "metadata": {
+        "id": "wFM8jleLs61o"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Run ResNet18 for 30 epochs\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "iGwi3cm-IZJK"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resNet18_losses = train(resnet18, data['train'], epochs=30, schedule={0:.01, 5:.005, 10:.001, 20:.0005}, lr=.01, print_every=10, checkpoint_path=checkpoints)"
+      ],
+      "metadata": {
+        "id": "ktWsrErtIfRB"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Run ResNet50 for 30 epochs"
+      ],
+      "metadata": {
+        "id": "I3Uvk9Q2nFPh"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resNet50_losses = train(resnet50, data['train'], epochs=50, schedule={0:.01, 5:.005, 10:.001, 20:.0005}, lr=.01, print_every=10, checkpoint_path=checkpoints)"
+      ],
+      "metadata": {
+        "id": "dHlfR-yYnHsa"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Run ResNet50 for 50 epochs by using a pretrained resNet50 which had already trained 30 epochs."
+      ],
+      "metadata": {
+        "id": "eGEOLXPJRxlm"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resNet50_state = torch.load(checkpoints + 'resNet50Size384/checkpoint-30.pkl')\n",
+        "resnet50.load_state_dict(resNet50_state['net'])\n",
+        "resNet50_losses = train(resnet50, data['train'], epochs=50, schedule={0:.01, 5:.005, 10:.001, 20:.0005, 35: .0001}, lr=.01, print_every=10, checkpoint_path=checkpoints, state=resNet50_state)"
+      ],
+      "metadata": {
+        "id": "WUTmb1VWRzdU"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Run ResNet101 for 30 epochs "
+      ],
+      "metadata": {
+        "id": "ecPcO7g_l0Fy"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resnet101_losses = train(resnet101, data['train'], epochs=30, schedule={0:.01, 5:.005, 10:.001, 20:.0005}, lr=.01, print_every=10, checkpoint_path=checkpoints)"
+      ],
+      "metadata": {
+        "id": "SbDvg1iTl2-J"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Run ResNet152 for 30 epochs"
+      ],
+      "metadata": {
+        "id": "DhQX4pyFyTan"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resNet152_losses = train(resnet152, data['train'], epochs=30, schedule={0:.01, 5:.005, 10:.001, 20:.0005}, lr=.01, print_every=10, checkpoint_path=checkpoints)"
+      ],
+      "metadata": {
+        "id": "u7kAsNEjsorI"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Run DenseNet for 10 epochs with .01 learning rate"
+      ],
+      "metadata": {
+        "id": "k0b2-kmX-Cyd"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "densenet161_losses = train(densenet161, data['train'], epochs=30, schedule={0:.01, 5:.005, 10:.001, 20:.0005}, lr=.01, print_every=10, checkpoint_path=checkpoints)"
+      ],
+      "metadata": {
+        "id": "P-bmLbYL6Ci-"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Run VGG 19 for 30 epochs"
+      ],
+      "metadata": {
+        "id": "9xwYZi116vPx"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "vgg19_losses = train(vgg19, data['train'], epochs=30, schedule={0:.01, 5:.005, 10:.001, 20:.0005}, lr=.01, print_every=10, checkpoint_path=checkpoints)"
+      ],
+      "metadata": {
+        "id": "WAW__ERE6xgg"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 5) Predictions \n",
+        "\n",
+        "This code is taken directly from the tutorial but modifed to work for a windows OS and my paths. Specifically, the split command needed to be edited for windows OS. Each of the predict calls after the definition show the last prediction run by me for a given model."
+      ],
+      "metadata": {
+        "id": "Cv0UTbQ1xg-7"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def predict(net, dataloader, ofname):\n",
+        "    out = open(ofname, 'w')\n",
+        "    out.write(\"path,class\\n\")\n",
+        "    net.to(device)\n",
+        "    net.eval()\n",
+        "    correct = 0\n",
+        "    total = 0\n",
+        "    with torch.no_grad():\n",
+        "        for i, (images, labels) in enumerate(dataloader, 0):\n",
+        "            if i%100 == 0:\n",
+        "                print(i)\n",
+        "            images, labels = images.to(device), labels.to(device)\n",
+        "            outputs = net(images)\n",
+        "            _, predicted = torch.max(outputs.data, 1)\n",
+        "            fname, _ = dataloader.dataset.samples[i]\n",
+        "            out.write(\"test/{},{}\\n\".format(fname.split('\\\\')[-1], data['to_class'][predicted.item()]))\n",
+        "    out.close()"
+      ],
+      "metadata": {
+        "id": "wT6yEz_UBqeq"
+      },
+      "execution_count": 13,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 5.1) ResNet18 Prediction"
+      ],
+      "metadata": {
+        "id": "1v2LTj852zRG"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Note that checkpoint 15 is = to epoch 30 because of overwrite\n",
+        "restNet18_state = torch.load(checkpoints + 'resNet18Size384/checkpoint-15.pkl')\n",
+        "resnet18.load_state_dict(restNet18_state['net'])\n",
+        "predict(resnet18, data['test'], checkpoints + \"resNet18Size384With30Epochs.csv\")"
+      ],
+      "metadata": {
+        "id": "vx1Js5giEBQQ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 5.2) ResNet50 Prediction"
+      ],
+      "metadata": {
+        "id": "DfQnEmEY7wUL"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resNet50_state = torch.load(checkpoints + 'resNet50Size384/checkpoint-50.pkl')\n",
+        "resnet50.load_state_dict(resNet50_state['net'])\n",
+        "predict(resnet50, data['test'], checkpoints + \"resNet50Size384With50Epochs32Batch.csv\")"
+      ],
+      "metadata": {
+        "id": "pKa-tk-v7vee"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 5.2) ResNet152 Prediction"
+      ],
+      "metadata": {
+        "id": "Lt5qfQP2fKjo"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "resnet152_state = torch.load(checkpoints + 'resNet152/checkpoint-10.pkl')\n",
+        "resnet152.load_state_dict(resnet152_state['net'])\n",
+        "predict(resnet152, data['test'], checkpoints + \"resNet18Base.csv\")"
+      ],
+      "metadata": {
+        "id": "R7qF-3V6Nx-J"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 5.4) VGG Prediction\n"
+      ],
+      "metadata": {
+        "id": "3gMXQ6o1hHZ9"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "vgg19_state = torch.load(checkpoints + 'vgg19Size256/checkpoint-30.pkl')\n",
+        "vgg19.load_state_dict(vgg19_state['net'])\n",
+        "predict(vgg19, data['test'], checkpoints + \"vgg19Size256With30EpochsWith32Batch.csv\")"
+      ],
+      "metadata": {
+        "id": "Jj-KnCw6hLJ8"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#6) Conclusion \n",
+        "\n",
+        "In conclusion, I have spent nearly 60 hours on setting up, compiling, researching, training, and testing all of these models. \n",
+        "\n",
+        "The single most important aspect which influenced the accuracy of every single model was the input image size. As stated before, it makes total sense that resizing large images like the ones present in this data set to smaller versions results in a lot of pixel information being lost, which would otherwise help the model differentiate it from other pictures. So the larger the image, the better the model does. It's important to not that all of these models are designed to be run on larger images, espeically the higher renditions of resNet. However, I also learned that hardware limitations are very prevalent in computer vision and machine learning in general. Higher image sizes means a massive jump in required memory, so you have to be smart about the sizes you use. You must get the best out of the model, but also be able to run it! Lower the batch size allows you to run code, but increases the time complexity. A 64 batch runs 2x as slow as a 128 batch, and dropping down to 16 runs 8x slower than 128 batch. \\\n",
+        "\n",
+        "Overall, I think my accuracy percentage came out pretty high as I am currently first place on the leaderboard. Unfortunately I did not hit the accuracy I orignally wanted, which I stated in the project proposal as 90% but I came close and I am positve I would be able to hit it with my currently knowledge. The only thing holding me back is the hardware. For example, if I was able to run resNet152 or resNet101 for that matter on 384x384 input size with batch 32, I would most likely hit 90% if not above. \\\n",
+        "\n",
+        "Perhaps a system reliant on TPU computing instead of GPU computing would have been the better choice, however prior to starting the work in this project, I did not understand just how valuable computing power would be for CV. I have one of the best gaming PCs on the market you can build, and I never thought that my GPU wouldn't be enough to run the things I needed. It's eye opening."
+      ],
+      "metadata": {
+        "id": "5mATiHeRoW48"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 6.1) Best Results Table\n",
+        "This table consists of the best results for each of the 6 models I tested. DenseNet and resNet101 are left with x's because I never got a complete run with them, but I tried very many different combinations of input image and batch size to see if I could make it work.\n",
+        "\n",
+        "| Model | InputSize | Batch Size | Epochs | Accuracy |\n",
+        "| - | - | - | - | - |\n",
+        "| resNet18 | 384x384 |  128 | 30 | 80.95% |\n",
+        "| resNet50 | 384x384 |  32 | 50 | 87.15% |\n",
+        "| resNet101 | x |  x | x | x | \n",
+        "| resNet152 | 128X128 |  128 | 10 | 63.10% |\n",
+        "| densenet161 | x |  x | x | x |\n",
+        "| vgg19 | 256X256 |  32 | 30 | 73.90% |"
+      ],
+      "metadata": {
+        "id": "iE_w2VqkpdmL"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        ""
+      ],
+      "metadata": {
+        "id": "TzP7Vwgbs1yl"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
